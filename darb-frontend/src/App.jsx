@@ -167,7 +167,25 @@ function AppShell() {
     handleExportPng, handleExportJson, handleImportClick,
     setActiveTool, openAnalysis, logout,
   ]);
-
+  // ── Google OAuth callback handler ──
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const isGoogleCallback = params.get('token') === 'google';
+  const hash = window.location.hash;
+  if (isGoogleCallback || hash.includes('access_token')) {
+    const hashParams = new URLSearchParams(hash.replace('#', ''));
+    const accessToken = hashParams.get('access_token');
+    if (accessToken) {
+      window.history.replaceState({}, '', window.location.pathname);
+      import('./services/api').then(({ setToken, authAPI }) => {
+        setToken(accessToken);
+        authAPI.getMe().then(userData => {
+          login(userData, accessToken);
+        }).catch(() => {});
+      });
+    }
+  }
+}, [login]);
   // ── Keyboard shortcuts ──
   useEffect(() => {
     const handler = (e) => {
